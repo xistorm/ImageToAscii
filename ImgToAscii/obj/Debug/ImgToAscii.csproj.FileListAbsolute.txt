@@ -1,0 +1,6 @@
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\bin\Debug\ImgToAscii.exe
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\bin\Debug\ImgToAscii.pdb
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\obj\Debug\ImgToAscii.csprojAssemblyReference.cache
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\obj\Debug\ImgToAscii.csproj.CoreCompileInputs.cache
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\obj\Debug\ImgToAscii.exe
+C:\Users\Lenovo_302\work\сSharp\ImgToAscii\ImgToAscii\obj\Debug\ImgToAscii.pdb
