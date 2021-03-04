@@ -15,11 +15,23 @@ namespace ImgToAscii
             string txtPath = "ascii.txt";
             string resImagePath = "ascii.png";
             StreamWriter sw = new StreamWriter(txtPath, false, System.Text.Encoding.Default);
+            
             //набор символов
             string ASCII = " \'.\",:;!~+-xmo*W&8@";
             double coef = (ASCII.Length - 1.0) / 255;
+            
             //открываем файл
-            Bitmap image = (Bitmap)Image.FromFile(imagePath);
+            Bitmap temp = (Bitmap)Image.FromFile(imagePath);
+            
+            //делаем изображение подходящих размеров
+            int maxWidth = 120;
+            int maxHeight = 60;
+            double scale = (maxWidth + .0) / temp.Width;
+            if (temp.Height * scale > maxHeight)
+                scale = (maxHeight + .0) / temp.Height;
+            
+            Bitmap image = new Bitmap(temp, new Size((int)Math.Ceiling(temp.Width * scale), (int)Math.Ceiling(temp.Height * scale)));
+
             //делаем изображение чёрно-белым
             ToGreyScale(ref image);
             
@@ -35,12 +47,11 @@ namespace ImgToAscii
             sw.Close();
 
             //текстовый вариант в виде картинки
-            var res = ConvertTextToImage(new StreamReader(txtPath), image.Height * 10, image.Width * 10);
+            //var res = ConvertTextToImage(new StreamReader(txtPath), image.Height * 10, image.Width * 10);
             
 
             //сохраняем и закрываем
-            res.Save("ascii.png");
-            res.Dispose();
+            image.Save("temp.png");
             image.Dispose();
         }
 
