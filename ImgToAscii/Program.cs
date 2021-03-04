@@ -10,22 +10,66 @@ namespace ImgToAscii
     {
         public static void Main(string[] args)
         {
+            //необходимые данные
+            string directory;
+            string fileName;
+            string imagePath;
+
+            int maxWidth;
+            int maxHeight;
+
+            //выбор дериктории и файла
+            Console.WriteLine("Enter file name or ful path if it is in another directory");
+            imagePath = Console.ReadLine();
+            imagePath = imagePath.Replace('/', '\\');
+            if (imagePath.Contains("\\"))
+            {
+                directory = imagePath.Remove(imagePath.LastIndexOf('\\'));
+                fileName = imagePath.Substring(imagePath.LastIndexOf('\\'));
+                fileName = fileName.Remove(fileName.LastIndexOf('.'));
+            }
+            else
+            {
+                directory = "";
+                fileName = imagePath.Remove(imagePath.LastIndexOf('.'));
+            }
+            string txtPath = directory + fileName + "_ascii.txt";
+            
+            //открываем файл
+            Bitmap temp = (Bitmap)Image.FromFile(imagePath);
+            
+            //выбор качества детализации результата
+            Console.Clear();
+            Console.WriteLine("Detalization [1] - full resolution, [2] - half-full, [3] - worst");
+            {
+                int option = int.Parse(Console.ReadLine());
+                switch (option)
+                {
+                    case 1:
+                        maxWidth = temp.Width;
+                        maxHeight = temp.Height;
+                        break;
+                    case 2:
+                        maxWidth = temp.Width / 2;
+                        maxHeight = maxWidth * 9 / 16;
+                        break;
+                    case 3:
+                    default:
+                        maxWidth = 320;
+                        maxHeight = 180;
+                        break;
+                }
+            }
+
             //для записи
-            string imagePath = "image.jpg";
-            string txtPath = "ascii.txt";
             string resImagePath = "ascii.png";
             StreamWriter sw = new StreamWriter(txtPath, false, System.Text.Encoding.Default);
             
             //набор символов
             string ASCII = " \'.\",:;!~+-xmo*W&8@";
             double coef = (ASCII.Length - 1.0) / 255;
-            
-            //открываем файл
-            Bitmap temp = (Bitmap)Image.FromFile(imagePath);
-            
+
             //делаем изображение подходящих размеров
-            int maxWidth = 120;
-            int maxHeight = 60;
             double scale = (maxWidth + .0) / temp.Width;
             if (temp.Height * scale > maxHeight)
                 scale = (maxHeight + .0) / temp.Height;
@@ -40,7 +84,7 @@ namespace ImgToAscii
             {
                 for (int x = 0; x < image.Width; ++x)
                 {
-                    sw.Write(ASCII[(int)Math.Floor(image.GetPixel(x, y).R * coef)]);
+                    sw.Write(ASCII[(int)Math.Floor(image.GetPixel(x, y).R * coef)].ToString() + ASCII[(int)Math.Floor(image.GetPixel(x, y).R * coef)].ToString());
                 }
                 sw.WriteLine();
             }
@@ -50,8 +94,7 @@ namespace ImgToAscii
             //var res = ConvertTextToImage(new StreamReader(txtPath), image.Height * 10, image.Width * 10);
             
 
-            //сохраняем и закрываем
-            image.Save("temp.png");
+            //закрываем
             image.Dispose();
         }
 
