@@ -17,6 +17,10 @@ namespace ImgToAscii
 
             int maxWidth;
             int maxHeight;
+            
+            //набор символов
+            string ASCII;
+            double coef;
 
             //выбор дериктории и файла
             Console.WriteLine("Enter file name or ful path if it is in another directory");
@@ -64,10 +68,6 @@ namespace ImgToAscii
             //для записи
             string resImagePath = "ascii.png";
             StreamWriter sw = new StreamWriter(txtPath, false, System.Text.Encoding.Default);
-            
-            //набор символов
-            string ASCII = " \'.\",:;!~+-xmo*W&8@";
-            double coef = (ASCII.Length - 1.0) / 255;
 
             //делаем изображение подходящих размеров
             double scale = (maxWidth + .0) / temp.Width;
@@ -78,13 +78,29 @@ namespace ImgToAscii
 
             //делаем изображение чёрно-белым
             ToGreyScale(ref image);
+                
+            //подбираем
+            ASCII = " \'.\",:;!~+-xmo*W&8@";
+            (int min, int max) palet = (256, 0);
+            for (int y = 0; y < image.Height; ++y)
+            {
+                for (int x = 0; x < image.Width; ++x)
+                {
+                    if (image.GetPixel(x, y).R > palet.max)
+                        palet.max = image.GetPixel(x, y).R;
+                    if (image.GetPixel(x, y).R < palet.min)
+                        palet.min = image.GetPixel(x, y).R;
+                }
+            }
+            coef = (ASCII.Length - 1.0) / (palet.max - palet.min);
             
             //создаём текстовый файл с символами
             for (int y = 0; y < image.Height; ++y)
             {
                 for (int x = 0; x < image.Width; ++x)
                 {
-                    sw.Write(ASCII[(int)Math.Floor(image.GetPixel(x, y).R * coef)].ToString() + ASCII[(int)Math.Floor(image.GetPixel(x, y).R * coef)].ToString());
+                    var color = image.GetPixel(x, y).R;
+                    sw.Write(ASCII[(int)Math.Floor((palet.max - color) * coef)].ToString() + ASCII[(int)Math.Floor((palet.max - color) * coef)].ToString());
                 }
                 sw.WriteLine();
             }
