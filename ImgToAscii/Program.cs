@@ -107,10 +107,11 @@ namespace ImgToAscii
             sw.Close();
 
             //текстовый вариант в виде картинки
-            //var res = ConvertTextToImage(new StreamReader(txtPath), image.Height * 10, image.Width * 10);
+            var res = ConvertTextToImage(new StreamReader(txtPath), (int)Math.Floor(image.Height / coef), (int)Math.Floor(image.Width / coef));
             
 
             //закрываем
+            res.Save("res.jpg");
             image.Dispose();
         }
 
@@ -127,7 +128,7 @@ namespace ImgToAscii
 
             using (Graphics graphics = Graphics.FromImage(bmp))
             {
-                Font font = new Font("Times New Roman", 10);
+                Font font = new Font("Anonymous Pro", 10);
                 graphics.FillRectangle(new SolidBrush(Color.White), 0, 0, width, height);
                 graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 graphics.DrawString(sr.ReadToEnd(), font, new SolidBrush(Color.Black), 0, 0);
