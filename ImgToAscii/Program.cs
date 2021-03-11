@@ -1,8 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Media.Imaging;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.IO;
+using System.Windows;
+using System.Windows.Interop;
 
 namespace ImgToAscii
 {
@@ -11,9 +15,11 @@ namespace ImgToAscii
         public static void Main(string[] args)
         {
             //необходимые данные
-            string directory;
-            string fileName;
-            string imagePath;
+            string directory = "";
+            string fileName = "";
+            string imagePath = "";
+            string resName = "";
+            string txtName = "";
 
             int maxWidth;
             int maxHeight;
@@ -21,7 +27,7 @@ namespace ImgToAscii
             //набор символов
             string ASCII;
             double coef;
-
+            
             //выбор дериктории и файла
             Console.WriteLine("Enter file name or ful path if it is in another directory");
             imagePath = Console.ReadLine();
@@ -37,11 +43,12 @@ namespace ImgToAscii
                 directory = "";
                 fileName = imagePath.Remove(imagePath.LastIndexOf('.'));
             }
-            string txtPath = directory + fileName + "_ascii.txt";
+            resName = directory + fileName + "_ascii" + imagePath.Substring(imagePath.LastIndexOf('.'));
+            txtName = directory + fileName + "_ascii.txt";
             
             //открываем файл
             Bitmap temp = (Bitmap)Image.FromFile(imagePath);
-            
+
             //выбор качества детализации результата
             Console.Clear();
             Console.WriteLine("Detalization [1] - full resolution, [2] - half-full, [3] - worst");
@@ -65,22 +72,52 @@ namespace ImgToAscii
                 }
             }
 
-            //для записи
-            string resImagePath = "ascii.png";
-            StreamWriter sw = new StreamWriter(txtPath, false, System.Text.Encoding.Default);
-
             //делаем изображение подходящих размеров
             double scale = (maxWidth + .0) / temp.Width;
             if (temp.Height * scale > maxHeight)
                 scale = (maxHeight + .0) / temp.Height;
+
             
-            Bitmap image = new Bitmap(temp, new Size((int)Math.Ceiling(temp.Width * scale), (int)Math.Ceiling(temp.Height * scale)));
+            if (imagePath.Contains(".gif"))
+                GifConvert(imagePath, scale, resName);
+            else
+                SimpleImageConvert(temp, scale, txtName, resName).Save(resName);
+        }
+
+        public static void GifConvert(string imagePath, double scale, string resName)
+        {
+            GifBitmapEncoder encoder = new GifBitmapEncoder();
+            Image tempImage = Image.FromFile(imagePath);
+            FrameDimension dimension = new FrameDimension(tempImage.FrameDimensionsList[0]);
+            
+            for (int i = 0; i < tempImage.GetFrameCount(dimension); ++i)
+            {
+                tempImage.SelectActiveFrame(dimension, i);
+                var frameBitmap = SimpleImageConvert((Bitmap) tempImage.Clone(), scale, "tmp.txt", "tmp.png");
+                var frame = Imaging.CreateBitmapSourceFromHBitmap(
+                    frameBitmap.GetHbitmap(),
+                    IntPtr.Zero,
+                    Int32Rect.Empty,
+                    BitmapSizeOptions.FromEmptyOptions());
+                encoder.Frames.Add(BitmapFrame.Create(frame));
+            }
+            
+            encoder.Save(new FileStream(resName, FileMode.Create));
+        }
+
+        public static Bitmap SimpleImageConvert(Bitmap tempImage, double scale, string txtName, string resName)
+        {
+            //для записи
+            string resImagePath = "ascii.png";
+            StreamWriter sw = new StreamWriter(txtName, false, System.Text.Encoding.Default);
+            
+            Bitmap image = new Bitmap(tempImage, new System.Drawing.Size((int)Math.Ceiling(tempImage.Width * scale), (int)Math.Ceiling(tempImage.Height * scale)));
 
             //делаем изображение чёрно-белым
             ToGreyScale(ref image);
                 
             //подбираем
-            ASCII = " \'.\",:;!~+-xmo*W&8@";
+            string ASCII = " \'.\",:;!~+-xmo*W&8@";
             (int min, int max) palet = (256, 0);
             for (int y = 0; y < image.Height; ++y)
             {
@@ -92,7 +129,7 @@ namespace ImgToAscii
                         palet.min = image.GetPixel(x, y).R;
                 }
             }
-            coef = (ASCII.Length - 1.0) / (palet.max - palet.min);
+            double coef = (ASCII.Length - 1.0) / (palet.max - palet.min);
             
             //создаём текстовый файл с символами
             for (int y = 0; y < image.Height; ++y)
@@ -107,12 +144,7 @@ namespace ImgToAscii
             sw.Close();
 
             //текстовый вариант в виде картинки
-            var res = ConvertTextToImage(new StreamReader(txtPath), (int)Math.Floor(image.Height / coef), (int)Math.Floor(image.Width / coef));
-            
-
-            //закрываем
-            res.Save("res.jpg");
-            image.Dispose();
+            return ConvertTextToImage(new StreamReader(txtName), (int)(image.Height * 7), image.Width * 8);
         }
 
         /// <summary>
@@ -128,7 +160,7 @@ namespace ImgToAscii
 
             using (Graphics graphics = Graphics.FromImage(bmp))
             {
-                Font font = new Font("Anonymous Pro", 10);
+                Font font = new Font("Anonymous Pro", 5);
                 graphics.FillRectangle(new SolidBrush(Color.White), 0, 0, width, height);
                 graphics.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
                 graphics.DrawString(sr.ReadToEnd(), font, new SolidBrush(Color.Black), 0, 0);
@@ -137,6 +169,7 @@ namespace ImgToAscii
                 graphics.Dispose();
             }
 
+            sr.Close();
             return bmp;
         }
 
